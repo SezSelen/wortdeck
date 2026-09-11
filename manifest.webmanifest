@@ -1,0 +1,10 @@
+{
+  "name": "Wortdeck",
+  "short_name": "Wortdeck",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F3F5",
+  "theme_color": "#16202B",
+  "lang": "tr",
+  "orientation": "portrait"
+}

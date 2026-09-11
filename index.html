@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16202B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wortdeck">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Wortdeck — Almanca çalışma destesi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F3F5; --card:#FFFFFF; --ink:#16202B; --muted:#5C6B7A; --line:#D8DCE1;
+  --der:#2F6FB0; --die:#B23A48; --das:#2E7D5B; --ok:#2E7D5B; --warn:#B23A48;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:'Source Serif 4',Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto;padding:20px 18px calc(60px + env(safe-area-inset-bottom))}
+
+header{display:flex;align-items:baseline;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+header h1{font-family:var(--serif);font-size:25px;font-weight:600;margin:0;letter-spacing:-.01em}
+header .sub{color:var(--muted);font-size:13px}
+#sync{margin-left:auto;font-size:12px;color:var(--muted)}
+#sync.bad{color:var(--warn)}
+
+nav{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav button{font-family:inherit;font-size:14px;background:none;border:0;border-bottom:2px solid transparent;
+  padding:12px 15px;color:var(--muted);cursor:pointer;margin-bottom:-1px;white-space:nowrap;min-height:44px}
+nav button.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
+nav button:focus-visible{outline:2px solid var(--der);outline-offset:2px;border-radius:3px}
+
+.panel{display:none}
+.panel.on{display:block}
+
+.search{display:flex;gap:8px;margin-bottom:8px}
+.search input{flex:1;min-width:0;font-family:var(--serif);font-size:21px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:4px;background:var(--card);color:var(--ink)}
+.search input:focus{outline:2px solid var(--der);outline-offset:-1px;border-color:transparent}
+button.go{font-family:inherit;font-size:15px;font-weight:500;background:var(--ink);color:#fff;border:0;
+  border-radius:4px;padding:0 20px;cursor:pointer;min-height:48px}
+button.go:disabled{background:var(--muted)}
+.hint{color:var(--muted);font-size:13px;margin:0 0 18px}
+
+.entry{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:20px;margin-bottom:14px}
+.entry .top{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:4px}
+.lemma{font-family:var(--serif);font-size:28px;font-weight:600;letter-spacing:-.01em}
+.artikel{font-family:var(--serif);font-size:28px;font-weight:400}
+.artikel.der{color:var(--der)} .artikel.die{color:var(--die)} .artikel.das{color:var(--das)}
+.meta{color:var(--muted);font-size:13px;margin-bottom:13px}
+.tr{font-size:18px;margin-bottom:11px}
+.def{font-family:var(--serif);font-size:16px;line-height:1.6;margin-bottom:13px;max-width:62ch}
+.bsp{border-left:3px solid var(--line);padding-left:13px;font-family:var(--serif);font-size:16px;line-height:1.6;max-width:62ch}
+.bsp .t{color:var(--muted);font-size:14px;font-family:var(--sans);margin-top:4px}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:99px;color:var(--muted)}
+.err{background:#FDF0F0;border:1px solid #E8C4C4;color:#7A2A2A;padding:12px 14px;border-radius:4px;margin-bottom:14px;font-size:14px}
+.loading{color:var(--muted);font-size:14px;padding:14px 0}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{font-family:inherit;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:99px;
+  padding:8px 13px;cursor:pointer;color:var(--muted)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.group{margin-bottom:24px}
+.group h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.group h3 span{color:var(--muted);font-family:var(--sans);font-size:13px;font-weight:400;margin-left:6px}
+.row{display:flex;align-items:baseline;gap:10px;padding:11px 2px;border-bottom:1px solid #EBEDEF;flex-wrap:wrap}
+.row .w{font-family:var(--serif);font-size:17px;min-width:165px}
+.row .m{color:var(--muted);flex:1;font-size:14px;min-width:120px}
+.row .box{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 6px}
+.row .del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:20px;padding:0 8px;line-height:1;min-height:34px}
+.empty{color:var(--muted);padding:28px 0;font-family:var(--serif);font-size:17px}
+
+.deck{background:var(--card);border:1px solid var(--line);border-radius:5px;padding:38px 20px;text-align:center;
+  min-height:240px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px}
+.deck .front{font-family:var(--serif);font-size:34px;font-weight:600;line-height:1.2}
+.deck .back{max-width:52ch}
+.deck .back .tr{font-size:20px;margin-bottom:10px}
+.deck .back .def{font-size:15px;color:var(--muted);margin-bottom:12px}
+.deck .back .bsp{text-align:left;font-size:15px;display:inline-block}
+.deckbar{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.deckbar button{font-family:inherit;font-size:15px;padding:13px 22px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--line);background:var(--card);min-height:48px;flex:1;max-width:200px}
+.deckbar .know{border-color:var(--ok);color:var(--ok)}
+.deckbar .no{border-color:var(--warn);color:var(--warn)}
+.deckbar .flip{background:var(--ink);color:#fff;border-color:var(--ink)}
+.progress{text-align:center;color:var(--muted);font-size:13px;margin-top:13px}
+
+.field{margin-bottom:20px;max-width:520px}
+.field label{display:block;font-size:14px;font-weight:500;margin-bottom:5px}
+.field p{color:var(--muted);font-size:13px;margin:4px 0 8px}
+.field input,.field select{width:100%;font-family:inherit;font-size:16px;padding:11px;border:1px solid var(--line);
+  border-radius:4px;background:var(--card);color:var(--ink)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btnrow button{font-family:inherit;font-size:14px;padding:12px 16px;border:1px solid var(--line);background:var(--card);
+  border-radius:4px;cursor:pointer;min-height:44px}
+.stat{color:var(--muted);font-size:13px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+
+/* Parola kapısı */
+#gate{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px;z-index:10}
+#gate .box{max-width:340px;width:100%}
+#gate h2{font-family:var(--serif);font-size:26px;font-weight:600;margin:0 0 6px}
+#gate p{color:var(--muted);font-size:14px;margin:0 0 18px}
+#gate input{width:100%;font-family:inherit;font-size:16px;padding:13px;border:1px solid var(--line);border-radius:4px;background:var(--card)}
+#gate button{width:100%;margin-top:10px;font-family:inherit;font-size:15px;font-weight:500;background:var(--ink);
+  color:#fff;border:0;border-radius:4px;padding:14px;cursor:pointer}
+#gate .msg{color:var(--warn);font-size:14px;margin-top:10px;min-height:20px}
+
+@media (max-width:420px){
+  .lemma,.artikel{font-size:25px}
+  .deck .front{font-size:29px}
+  .row .w{min-width:140px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="gate"><div class="box">
+  <h2>Wortdeck</h2>
+  <p>Devam etmek için parolanı gir. Bu cihazda hatırlanacak.</p>
+  <input id="gatePass" type="password" autocomplete="current-password" placeholder="Parola">
+  <button id="gateBtn">Aç</button>
+  <div class="msg" id="gateMsg"></div>
+</div></div>
+
+<div class="wrap">
+
+<header>
+  <h1>Wortdeck</h1>
+  <span class="sub">B1</span>
+  <span id="sync"></span>
+</header>
+
+<nav>
+  <button data-tab="ara" class="on">Ara</button>
+  <button data-tab="liste">Liste</button>
+  <button data-tab="kart">Kartlar</button>
+  <button data-tab="ayar">Ayarlar</button>
+</nav>
+
+<section class="panel on" id="p-ara">
+  <div class="search">
+    <input id="q" placeholder="Kelime yaz" autocomplete="off" spellcheck="false" enterkeyhint="search">
+    <button class="go" id="goBtn">Ara</button>
+  </div>
+  <p class="hint">Aradığın her kelime otomatik kaydedilir ve tüm cihazlarına eşitlenir.</p>
+  <div id="araOut"></div>
+</section>
+
+<section class="panel" id="p-liste">
+  <div class="search" style="margin-bottom:14px">
+    <input id="filterQ" placeholder="Listede ara" style="font-family:var(--sans);font-size:16px" autocomplete="off">
+  </div>
+  <div class="filters" id="filters"></div>
+  <div id="listOut"></div>
+</section>
+
+<section class="panel" id="p-kart">
+  <div class="filters" id="cardFilters"></div>
+  <div id="cardOut"></div>
+</section>
+
+<section class="panel" id="p-ayar">
+  <div class="field">
+    <label for="model">Model</label>
+    <p>Haiku sözlük maddesi için yeterli ve ucuz. Sonnet daha isabetli ama birkaç kat pahalı.</p>
+    <select id="model">
+      <option value="claude-haiku-4-5-20251001">claude-haiku-4-5</option>
+      <option value="claude-sonnet-5">claude-sonnet-5</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Yedek</label>
+    <p>Deste bulutta tutuluyor. Yine de ara sıra kendi kopyanı indir.</p>
+    <div class="btnrow">
+      <button id="expJson">JSON indir</button>
+      <button id="impJson">JSON yükle</button>
+      <button id="expCsv">Anki CSV indir</button>
+      <button id="forget">Bu cihazdan çık</button>
+    </div>
+    <input type="file" id="fileIn" accept=".json" hidden>
+  </div>
+  <p class="stat" id="stat"></p>
+</section>
+
+</div>
+
+<script>
+'use strict';
+
+const LKEY = 'wortdeck_v2';
+const PKEY = 'wortdeck_pass';
+const WORTARTEN = ['Nomen','Verb','Adjektiv','Adverb','Präposition','Konjunktion','Redewendung','Sonstige'];
+const INTERVALS = [1,2,4,8,16];
+
+let state = { words: [], settings: { model:'claude-haiku-4-5-20251001' } };
+let ui = { listFilter:'Hepsi', listQuery:'', cardFilter:'Hepsi', currentId:null, flipped:false };
+let pass = '';
+let syncTimer = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const normalize = s => String(s ?? '').trim().toLowerCase();
+const active = () => state.words.filter(w => !w.deleted);
+
+/* ========== yerel önbellek ========== */
+function loadLocal(){
+  try{ const raw = localStorage.getItem(LKEY); if(raw) state = Object.assign(state, JSON.parse(raw)); }
+  catch(e){ console.warn(e); }
+}
+function saveLocal(){
+  try{ localStorage.setItem(LKEY, JSON.stringify(state)); }catch(e){ console.warn(e); }
+}
+
+/* ========== sunucu ========== */
+function setSync(text, bad=false){
+  const el = $('#sync'); el.textContent = text; el.classList.toggle('bad', bad);
+}
+
+async function api(path, opts={}){
+  const res = await fetch(path, Object.assign({
+    headers: { 'content-type':'application/json', 'x-wortdeck-pass': pass }
+  }, opts));
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+function mergeInto(incoming){
+  const map = new Map();
+  for(const w of [...state.words, ...incoming]){
+    if(!w || !w.lemma) continue;
+    const k = normalize(w.lemma);
+    const cur = map.get(k);
+    if(!cur || (w.updatedAt||0) > (cur.updatedAt||0)) map.set(k, w);
+  }
+  state.words = [...map.values()].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+
+async function pull(){
+  try{
+    setSync('eşitleniyor…');
+    mergeInto(await api('/api/deck'));
+    saveLocal(); renderAll(); setSync('eşitlendi');
+  }catch(e){ setSync('çevrimdışı', true); }
+}
+
+function scheduleSync(){
+  clearTimeout(syncTimer);
+  setSync('bekliyor…');
+  syncTimer = setTimeout(push, 1200);
+}
+
+async function push(){
+  try{
+    setSync('eşitleniyor…');
+    mergeInto(await api('/api/deck', { method:'PUT', body: JSON.stringify(state.words) }));
+    saveLocal(); renderAll(); setSync('eşitlendi');
+  }catch(e){ setSync('çevrimdışı', true); }
+}
+
+function save(){ saveLocal(); scheduleSync(); }
+
+/* ========== kelime işlemleri ========== */
+function findWord(lemma){
+  return state.words.find(w => normalize(w.lemma) === normalize(lemma));
+}
+
+function addWord(entry, quelle='manuel'){
+  const now = Date.now();
+  const existing = findWord(entry.lemma);
+  if(existing){
+    existing.lookupCount = (existing.lookupCount||1) + 1;
+    existing.deleted = false;
+    existing.updatedAt = now;
+    save();
+    return existing;
+  }
+  const w = Object.assign({
+    id: crypto.randomUUID(), quelle,
+    createdAt: now, updatedAt: now, lookupCount: 1,
+    srs: { box:1, dueAt: now, reps:0, lapses:0 }
+  }, entry);
+  if(!WORTARTEN.includes(w.wortart)) w.wortart = 'Sonstige';
+  state.words.unshift(w);
+  save();
+  return w;
+}
+
+function grade(word, known){
+  const s = word.srs;
+  s.reps++;
+  s.box = known ? Math.min(s.box + 1, INTERVALS.length) : 1;
+  if(!known) s.lapses++;
+  s.dueAt = Date.now() + INTERVALS[s.box-1] * 86400000;
+  word.updatedAt = Date.now();
+  save();
+}
+
+function dueWords(filter){
+  const now = Date.now();
+  return active()
+    .filter(w => filter === 'Hepsi' || w.wortart === filter)
+    .filter(w => (w.srs?.dueAt ?? 0) <= now);
+}
+
+/* ========== görünüm ========== */
+function entryHtml(w){
+  const art = w.artikel ? `<span class="artikel ${esc(w.artikel)}">${esc(w.artikel)}</span>` : '';
+  const bits = [];
+  if(w.wortart) bits.push(esc(w.wortart));
+  if(w.plural) bits.push('Plural: ' + esc(w.plural));
+  if(w.verbInfo?.praeteritum) bits.push(`${esc(w.verbInfo.praeteritum)} · ${esc(w.verbInfo.perfekt||'')}`);
+  if(w.verbInfo?.trennbar) bits.push('trennbar');
+  if(w.verbInfo?.kasus) bits.push(esc(w.verbInfo.kasus));
+  return `<div class="entry">
+    <div class="top">${art}<span class="lemma">${esc(w.lemma)}</span><span class="tag">${esc(w.niveau||'—')}</span></div>
+    <div class="meta">${bits.join(' &nbsp;·&nbsp; ')}</div>
+    <div class="tr">${esc(w.tr)}</div>
+    <div class="def">${esc(w.de_definition)}</div>
+    <div class="bsp">${esc(w.beispiel)}<div class="t">${esc(w.beispiel_tr)}</div></div>
+  </div>`;
+}
+
+function renderList(){
+  const all = active();
+  const counts = {};
+  all.forEach(w => counts[w.wortart] = (counts[w.wortart]||0)+1);
+
+  $('#filters').innerHTML = ['Hepsi', ...WORTARTEN.filter(a=>counts[a])]
+    .map(a => `<button class="chip ${ui.listFilter===a?'on':''}" data-f="${a}">${a} ${a==='Hepsi'?all.length:counts[a]}</button>`).join('');
+
+  let ws = all.filter(w => ui.listFilter==='Hepsi' || w.wortart===ui.listFilter);
+  const q = normalize(ui.listQuery);
+  if(q) ws = ws.filter(w => normalize(w.lemma).includes(q) || normalize(w.tr).includes(q));
+
+  if(!ws.length){
+    $('#listOut').innerHTML = `<p class="empty">${all.length ? 'Bu filtreye uyan kelime yok.' : 'Deste boş. Ara sekmesinden ilk kelimeni ekle.'}</p>`;
+    return;
+  }
+  const groups = {};
+  ws.forEach(w => (groups[w.wortart] ||= []).push(w));
+
+  $('#listOut').innerHTML = WORTARTEN.filter(a=>groups[a]).map(a => `
+    <div class="group"><h3>${a}<span>${groups[a].length}</span></h3>
+    ${groups[a].map(w => `<div class="row">
+      <span class="w">${w.artikel?`<span class="artikel ${esc(w.artikel)}" style="font-size:17px">${esc(w.artikel)} </span>`:''}${esc(w.lemma)}</span>
+      <span class="m">${esc(w.tr)}</span>
+      <span class="box">kutu ${w.srs?.box ?? 1}</span>
+      <button class="del" data-del="${w.id}" aria-label="Sil">×</button>
+    </div>`).join('')}</div>`).join('');
+}
+
+function renderCards(){
+  const all = active();
+  const counts = {};
+  all.forEach(w => counts[w.wortart] = (counts[w.wortart]||0)+1);
+  $('#cardFilters').innerHTML = ['Hepsi', ...WORTARTEN.filter(a=>counts[a])]
+    .map(a => `<button class="chip ${ui.cardFilter===a?'on':''}" data-cf="${a}">${a}</button>`).join('');
+
+  const due = dueWords(ui.cardFilter);
+  if(!due.length){
+    $('#cardOut').innerHTML = `<p class="empty">${all.length ? 'Bugünlük bu kadar. Yarın yeni kartlar açılacak.' : 'Önce birkaç kelime ekle.'}</p>`;
+    ui.currentId = null;
+    return;
+  }
+  let w = due.find(x => x.id === ui.currentId);
+  if(!w){ w = due[0]; ui.currentId = w.id; ui.flipped = false; }
+
+  const front = `<div class="front">${w.artikel?`<span class="artikel ${esc(w.artikel)}">${esc(w.artikel)} </span>`:''}${esc(w.lemma)}</div>`;
+  const back = ui.flipped ? `<div class="back">
+      <div class="tr">${esc(w.tr)}</div>
+      <div class="def">${esc(w.de_definition)}</div>
+      <div class="bsp">${esc(w.beispiel)}<div class="t">${esc(w.beispiel_tr)}</div></div></div>` : '';
+
+  $('#cardOut').innerHTML = `<div class="deck">${front}${back}</div>
+    <div class="deckbar">${ ui.flipped
+      ? `<button class="no" data-g="0">Bilmiyorum</button><button class="know" data-g="1">Biliyorum</button>`
+      : `<button class="flip" data-flip="1">Çevir</button>` }</div>
+    <p class="progress">Sırada ${due.length} kart · kutu ${w.srs.box}/${INTERVALS.length}</p>`;
+}
+
+function renderStat(){
+  $('#stat').textContent = `${active().length} kelime · bugün ${dueWords('Hepsi').length} kart vadesinde`;
+}
+function renderAll(){ renderList(); renderCards(); renderStat(); }
+
+/* ========== olaylar ========== */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  $('#p-' + b.dataset.tab).classList.add('on');
+  renderAll();
+});
+
+async function doLookup(){
+  const word = $('#q').value.trim();
+  if(!word) return;
+  $('#goBtn').disabled = true;
+  $('#araOut').innerHTML = '<p class="loading">Aranıyor…</p>';
+  try{
+    const entry = await api('/api/lookup', {
+      method:'POST', body: JSON.stringify({ word, model: state.settings.model })
+    });
+    const saved = addWord(entry);
+    const again = saved.lookupCount > 1 ? `<p class="hint">Bu kelimeyi ${saved.lookupCount}. kez arıyorsun.</p>` : '';
+    $('#araOut').innerHTML = again + entryHtml(saved);
+    $('#q').value = '';
+    renderStat();
+  }catch(e){
+    $('#araOut').innerHTML = `<div class="err">${esc(e.message)}</div>`;
+  }finally{ $('#goBtn').disabled = false; }
+}
+$('#goBtn').onclick = doLookup;
+$('#q').addEventListener('keydown', e => { if(e.key==='Enter') doLookup(); });
+
+$('#filters').onclick = e => { const f = e.target.dataset.f; if(f){ ui.listFilter = f; renderList(); } };
+$('#filterQ').addEventListener('input', e => { ui.listQuery = e.target.value; renderList(); });
+$('#listOut').onclick = e => {
+  const id = e.target.dataset.del; if(!id) return;
+  const w = state.words.find(x=>x.id===id);
+  if(w && confirm(`"${w.lemma}" destenden silinsin mi?`)){
+    w.deleted = true; w.updatedAt = Date.now(); save(); renderAll();
+  }
+};
+$('#cardFilters').onclick = e => {
+  const f = e.target.dataset.cf; if(f){ ui.cardFilter = f; ui.currentId = null; ui.flipped = false; renderCards(); }
+};
+$('#cardOut').onclick = e => {
+  if(e.target.dataset.flip){ ui.flipped = true; return renderCards(); }
+  const g = e.target.dataset.g;
+  if(g !== undefined){
+    const w = state.words.find(x=>x.id===ui.currentId);
+    if(w) grade(w, g === '1');
+    ui.currentId = null; ui.flipped = false;
+    renderCards(); renderStat();
+  }
+};
+$('#model').onchange = e => { state.settings.model = e.target.value; saveLocal(); };
+
+function download(name, text, type='application/json'){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type}));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+$('#expJson').onclick = () =>
+  download(`wortdeck-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(active(), null, 2));
+$('#expCsv').onclick = () => {
+  const qq = s => '"' + String(s ?? '').replace(/"/g,'""') + '"';
+  download('wortdeck-anki.csv', active().map(w =>
+    [qq((w.artikel?w.artikel+' ':'')+w.lemma), qq(w.tr+' — '+w.de_definition+' | '+w.beispiel), qq(w.wortart)].join(',')
+  ).join('\n'), 'text/csv');
+};
+$('#impJson').onclick = () => $('#fileIn').click();
+$('#fileIn').onchange = async e => {
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const incoming = JSON.parse(await file.text());
+    if(!Array.isArray(incoming)) throw new Error('Dosya bir kelime listesi içermiyor.');
+    incoming.forEach(w => { w.updatedAt ||= w.createdAt || Date.now(); });
+    mergeInto(incoming); save(); renderAll();
+    alert(`${incoming.length} kayıt birleştirildi.`);
+  }catch(err){ alert('Yüklenemedi: ' + err.message); }
+  e.target.value = '';
+};
+$('#forget').onclick = () => {
+  if(confirm('Parola bu cihazdan silinsin mi? Deste bulutta kalır.')){
+    localStorage.removeItem(PKEY); location.reload();
+  }
+};
+
+/* ========== parola kapısı ========== */
+async function unlock(candidate){
+  pass = candidate;
+  await api('/api/deck');            // parolayı doğrulamak için en ucuz istek
+  localStorage.setItem(PKEY, candidate);
+  $('#gate').style.display = 'none';
+  loadLocal();
+  $('#model').value = state.settings.model;
+  renderAll();
+  $('#q').focus();
+  pull();
+}
+
+$('#gateBtn').onclick = async () => {
+  const v = $('#gatePass').value;
+  if(!v) return;
+  $('#gateMsg').textContent = '';
+  try{ await unlock(v); }
+  catch(e){ pass = ''; $('#gateMsg').textContent = e.message; }
+};
+$('#gatePass').addEventListener('keydown', e => { if(e.key==='Enter') $('#gateBtn').click(); });
+
+(async function init(){
+  const saved = localStorage.getItem(PKEY);
+  if(saved){
+    try{ await unlock(saved); return; }
+    catch(e){ localStorage.removeItem(PKEY); }
+  }
+  $('#gatePass').focus();
+})();
+</script>
+</body>
+</html>

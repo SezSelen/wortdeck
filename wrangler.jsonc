@@ -1,0 +1,9 @@
+{
+  "name": "wortdeck",
+  "compatibility_date": "2026-09-11",
+  "main": "src/worker.js",
+  "assets": { "directory": "./public" },
+  "kv_namespaces": [
+    { "binding": "DECK", "id": "d2a8fea2bcbe48f2b5259854e38daa52" }
+  ]
+}

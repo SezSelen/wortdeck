@@ -1,0 +1,5 @@
+{
+  "name": "wortdeck",
+  "compatibility_date": "2026-09-11",
+  "assets": { "directory": "./public" }
+}

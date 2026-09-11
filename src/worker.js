@@ -1,6 +1,6 @@
 /**
  * Wortdeck Worker
- * - /api/lookup : Anthropic'e vekillik eder, anahtar burada durur
+ * - /api/lookup : Anthropic'e vekillik eder, anahtar Secrets Store'da durur
  * - /api/deck   : desteyi KV'de tutar, GET ile okur PUT ile birleştirir
  * Statik dosyalar (public/) bu koda hiç uğramaz, Cloudflare doğrudan servis eder.
  */
@@ -34,7 +34,18 @@ const json = (obj, status = 200) =>
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
   });
 
-/** Sabit süreli karşılaştırma — parolayı karakter karakter sızdırmamak için */
+/**
+ * Secrets Store binding'i bir nesnedir, değeri asenkron gelir.
+ * Düz secret ise zaten dizedir. İkisini de destekliyoruz ki
+ * ilerde yöntem değişirse kod kırılmasın.
+ */
+async function getSecret(binding) {
+  if (!binding) return null;
+  if (typeof binding === 'string') return binding;
+  if (typeof binding.get === 'function') return await binding.get();
+  return null;
+}
+
 function sameSecret(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
   let diff = 0;
@@ -42,7 +53,6 @@ function sameSecret(a, b) {
   return diff === 0;
 }
 
-/** Lemma'ya göre birleştir, çakışmada updatedAt'i yeni olan kazanır */
 function mergeDecks(a = [], b = []) {
   const map = new Map();
   for (const w of [...a, ...b]) {
@@ -61,7 +71,7 @@ async function readDeck(env) {
   catch { return []; }
 }
 
-async function handleLookup(request, env) {
+async function handleLookup(request, env, apiKey) {
   const { word, model } = await request.json();
   if (!word || typeof word !== 'string' || word.length > 80) {
     return json({ error: 'Geçersiz kelime.' }, 400);
@@ -72,7 +82,7 @@ async function handleLookup(request, env) {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': env.ANTHROPIC_API_KEY,
+      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
@@ -100,7 +110,6 @@ async function handleLookup(request, env) {
 async function handlePutDeck(request, env) {
   const incoming = await request.json();
   if (!Array.isArray(incoming)) return json({ error: 'Deste bir dizi olmalı.' }, 400);
-
   const merged = mergeDecks(await readDeck(env), incoming);
   await env.DECK.put(DECK_KEY, JSON.stringify(merged));
   return json(merged);
@@ -112,16 +121,31 @@ export default {
     if (!url.pathname.startsWith('/api/')) {
       return json({ error: 'Bulunamadı.' }, 404);
     }
-    if (!env.ANTHROPIC_API_KEY || !env.APP_PASSWORD) {
-      return json({ error: 'Sunucu yapılandırılmamış: secret tanımlı değil.' }, 500);
+
+    let apiKey, appPassword;
+    try {
+      apiKey = await getSecret(env.ANTHROPIC_API_KEY);
+      appPassword = await getSecret(env.APP_PASSWORD);
+    } catch (e) {
+      return json({ error: 'Secret okunamadı: ' + (e.message || 'bilinmeyen hata') }, 500);
     }
-    if (!sameSecret(request.headers.get('x-wortdeck-pass') || '', env.APP_PASSWORD)) {
+
+    // Hangisinin eksik olduğunu söyle — teşhis böylece tek bakışta yapılıyor
+    const missing = [];
+    if (!apiKey) missing.push('ANTHROPIC_API_KEY');
+    if (!appPassword) missing.push('APP_PASSWORD');
+    if (!env.DECK) missing.push('DECK');
+    if (missing.length) {
+      return json({ error: 'Sunucu yapılandırılmamış, eksik binding: ' + missing.join(', ') }, 500);
+    }
+
+    if (!sameSecret(request.headers.get('x-wortdeck-pass') || '', appPassword)) {
       return json({ error: 'Parola hatalı.' }, 401);
     }
 
     try {
       if (url.pathname === '/api/lookup' && request.method === 'POST') {
-        return await handleLookup(request, env);
+        return await handleLookup(request, env, apiKey);
       }
       if (url.pathname === '/api/deck' && request.method === 'GET') {
         return json(await readDeck(env));

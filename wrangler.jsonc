@@ -5,5 +5,17 @@
   "assets": { "directory": "./public" },
   "kv_namespaces": [
     { "binding": "DECK", "id": "d2a8fea2bcbe48f2b5259854e38daa52" }
+  ],
+  "secrets_store_secrets": [
+    {
+      "binding": "ANTHROPIC_API_KEY",
+      "store_id": "22c914cbb713427d91b46eb134ae1fc8",
+      "secret_name": "ANTHROPIC_API_KEY"
+    },
+    {
+      "binding": "APP_PASSWORD",
+      "store_id": "22c914cbb713427d91b46eb134ae1fc8",
+      "secret_name": "APP_PASSWORD"
+    }
   ]
 }
